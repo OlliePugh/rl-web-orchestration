@@ -29,17 +29,21 @@ app.use((req, res, next) => {
 app.use(express.static(__dirname + "/admin"));
 
 const checkQueueStatus = (socket) => {
-  if (queue.length >= 2) {
-    console.log("starting game")
-    socket.to(broadcaster).emit("watcher", queue.shift());  // send video to first client
-    socket.to(broadcaster).emit("watcher", queue.shift());  // send video to first client
+  socket.to(broadcaster).emit("queueSize", queue.length)
+  if (queue.length >= 2) {  // TODO make sure that a game is not currently in progress
+    socket.to(broadcaster).emit("watcher", queue[0]);  // send video to first client
+    socket.to(broadcaster).emit("watcher", queue[1]);  // send video to second client
+    removeFromQueue(socket, queue[0])
+    removeFromQueue(socket, queue[0])
+    console.log(`Start game: ${queue[0]} vs ${queue[1]}`)
   }
 }
 
-const removeFromQueue = (clientId) => {
+const removeFromQueue = (socket, clientId) => {
   if (queue.includes(clientId)) {
     console.log(`Removing user from queue ${clientId}`)
     queue = queue.filter(item => item != clientId)
+    socket.to(broadcaster).emit("queueSize", queue.length)
   }
 }
 
@@ -60,8 +64,11 @@ io.sockets.on("connection", socket => {
   });
   socket.on("disconnect", () => {
     socket.to(broadcaster).emit("disconnectPeer", socket.id);
-    removeFromQueue(socket.id)
+    removeFromQueue(socket, socket.id)
   });
+  socket.on("getQueueSize", () => {
+    socket.emit("queueSize", queue.length)
+  })
 
   socket.on("join_queue", () => {
     if (!queue.includes(socket.id)) {
@@ -73,7 +80,7 @@ io.sockets.on("connection", socket => {
   })
 
   socket.on("leave_queue", () => {
-    removeFromQueue(socket.id);
+    removeFromQueue(socket, socket.id);
   })
 
   socket.on("control_command", (message) => {

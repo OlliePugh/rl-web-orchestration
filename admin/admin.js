@@ -12,7 +12,9 @@ const config = {
   ]
 };
 
+// on start
 const socket = io.connect(window.location.origin);
+socket.emit("getQueueSize")
 
 socket.on("answer", (id, description) => {
   peerConnections[id].setRemoteDescription(description);
@@ -44,9 +46,15 @@ socket.on("candidate", (id, candidate) => {
 });
 
 socket.on("disconnectPeer", id => {
-  peerConnections[id].close();
-  delete peerConnections[id];
+  if (peerConnections[id]) {
+    peerConnections[id].close();
+    delete peerConnections[id];
+  }
 });
+
+socket.on("queueSize", amountInQueue => {
+  document.getElementById("queue-counter").textContent = amountInQueue;
+})
 
 window.onunload = window.onbeforeunload = () => {
   socket.close();

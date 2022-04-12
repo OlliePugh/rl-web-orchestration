@@ -55,14 +55,6 @@ socket.on("candidate", (id, candidate) => {
     .catch(e => console.error(e));
 });
 
-socket.on("connect", () => {
-  socket.emit("watcher");
-});
-
-socket.on("broadcaster", () => {
-  socket.emit("watcher");
-});
-
 window.onunload = window.onbeforeunload = () => {
   socket.close();
   peerConnection.close();
