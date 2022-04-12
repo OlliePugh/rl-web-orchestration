@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const adminInfo = require("./admin-details")
 
 let broadcaster;
 const port = 30120;
@@ -9,7 +10,23 @@ const http = require("http");
 const server = http.createServer(app);
 
 const io = require("socket.io")(server);
+
+// setup routing
 app.use(express.static(__dirname + "/public"));
+app.use((req, res, next) => {
+  const auth = {
+    login: adminInfo.username,
+    password: adminInfo.password
+  }
+  const [, b64auth = ''] = (req.headers.authorization || '').split(' ')
+  const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':')
+  if (login && password && login === auth.login && password === auth.password) {
+    return next()
+  }
+  res.set('WWW-Authenticate', 'Basic realm="401"')
+  res.status(401).send('Authentication required.')
+})
+app.use(express.static(__dirname + "/admin"));
 
 const checkQueueStatus = (socket) => {
   if (queue.length >= 2) {
