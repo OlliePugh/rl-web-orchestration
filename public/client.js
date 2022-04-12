@@ -69,8 +69,14 @@ window.onunload = window.onbeforeunload = () => {
 };
 
 function joinQueue() {
-  console.log("Joining queue")
+  console.log(`joining queue`)
   socket.emit("join_queue");
+  inQueue = true;
+}
+
+function leaveQueue() {
+  console.log(`$leaving queue`)
+  socket.emit("leave_queue");
   inQueue = true;
 }
 

@@ -36,6 +36,13 @@ const checkQueueStatus = (socket) => {
   }
 }
 
+const removeFromQueue = (clientId) => {
+  if (queue.includes(clientId)) {
+    console.log(`Removing user from queue ${clientId}`)
+    queue = queue.filter(item => item != clientId)
+  }
+}
+
 io.sockets.on("error", e => console.log(e));
 io.sockets.on("connection", socket => {
   socket.on("broadcaster", () => {
@@ -53,7 +60,7 @@ io.sockets.on("connection", socket => {
   });
   socket.on("disconnect", () => {
     socket.to(broadcaster).emit("disconnectPeer", socket.id);
-    // TODO need to check if user is in queue and kick them
+    removeFromQueue(socket.id)
   });
 
   socket.on("join_queue", () => {
@@ -64,6 +71,11 @@ io.sockets.on("connection", socket => {
 
     checkQueueStatus(socket)  // check the status of the queue
   })
+
+  socket.on("leave_queue", () => {
+    removeFromQueue(socket.id);
+  })
+
   socket.on("control_command", (message) => {
     console.log(`${socket.id}: sent ${message}`);
   })
