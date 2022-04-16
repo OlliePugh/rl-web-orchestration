@@ -13,8 +13,12 @@ const config = {
 };
 
 // on start
+
+let serialDevices = []
+
 const socket = io.connect(window.location.origin);
 socket.emit("getQueueSize")
+getSerial()
 
 socket.on("answer", (id, description) => {
   peerConnections[id].setRemoteDescription(description);
@@ -54,6 +58,13 @@ socket.on("disconnectPeer", id => {
 
 socket.on("queueSize", amountInQueue => {
   document.getElementById("queue-counter").textContent = amountInQueue;
+})
+
+socket.on("serialList", result => {  // BUG Does not work if user refreshes page because its a new socket id
+  serialDevices = result;
+  const friendlySerial = result.map(item => { return { friendlyName: item.friendlyName, value: item.path } });
+  const serialInput = document.getElementById("serial-input")
+  friendlySerial.forEach(friendlySerial => serialInput.add(new Option(friendlySerial.friendlyName, friendlySerial.value)));
 })
 
 window.onunload = window.onbeforeunload = () => {
@@ -113,4 +124,15 @@ function gotStream(stream) {
 
 function handleError(error) {
   console.error("Error: ", error);
+}
+
+function serialConnect() {
+  const serialInput = document.getElementById("serial-input")
+  const optionChosen = serialInput.options[serialInput.selectedIndex].value;
+  console.log(`Attempting to connect to ${optionChosen}`)
+  socket.emit("serialConnect", optionChosen)
+}
+
+function getSerial() {
+  socket.emit("listSerial");
 }

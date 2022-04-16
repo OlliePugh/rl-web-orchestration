@@ -1,18 +1,23 @@
 const express = require("express");
 const app = express();
-const adminInfo = require("./admin-details")
+const adminInfo = require("../admin-details")
+const { SerialPort, ReadlineParser } = require('serialport')
+const serialHandler = require("./serial-handler")
+
 
 let broadcaster;
 const port = 30120;
+let serialPort;
 let queue = []
 
 const http = require("http");
+const e = require("express");
 const server = http.createServer(app);
 
 const io = require("socket.io")(server);
 
 // setup routing
-app.use(express.static(__dirname + "/public"));
+app.use(express.static(`${__dirname}/../public`));
 app.use((req, res, next) => {
   const auth = {
     login: adminInfo.username,
@@ -26,16 +31,16 @@ app.use((req, res, next) => {
   res.set('WWW-Authenticate', 'Basic realm="401"')
   res.status(401).send('Authentication required.')
 })
-app.use(express.static(__dirname + "/admin"));
+app.use(express.static(`${__dirname}/../admin`));
 
 const checkQueueStatus = (socket) => {
   socket.to(broadcaster).emit("queueSize", queue.length)
   if (queue.length >= 2) {  // TODO make sure that a game is not currently in progress
     socket.to(broadcaster).emit("watcher", queue[0]);  // send video to first client
     socket.to(broadcaster).emit("watcher", queue[1]);  // send video to second client
-    removeFromQueue(socket, queue[0])
-    removeFromQueue(socket, queue[0])
     console.log(`Start game: ${queue[0]} vs ${queue[1]}`)
+    removeFromQueue(socket, queue[0])
+    removeFromQueue(socket, queue[0])
   }
 }
 
@@ -63,28 +68,49 @@ io.sockets.on("connection", socket => {
     socket.to(id).emit("candidate", socket.id, message);
   });
   socket.on("disconnect", () => {
+    if (socket.id === broadcaster) {
+      broadcaster = null;
+    }
     socket.to(broadcaster).emit("disconnectPeer", socket.id);
     removeFromQueue(socket, socket.id)
   });
   socket.on("getQueueSize", () => {
     socket.emit("queueSize", queue.length)
   })
-
+  socket.on("listSerial", async () => {
+    if (socket.id === broadcaster || !broadcaster) {
+      socket.emit("serialList", await SerialPort.list())
+    }
+  })
   socket.on("join_queue", () => {
     if (!queue.includes(socket.id)) {
       console.log(`Adding user to queue ${socket.id}`)
       queue.push(socket.id)
     }
-
     checkQueueStatus(socket)  // check the status of the queue
   })
-
   socket.on("leave_queue", () => {
     removeFromQueue(socket, socket.id);
   })
-
   socket.on("control_command", (message) => {
     console.log(`${socket.id}: sent ${message}`);
+  })
+  socket.on("serialConnect", (path) => {
+    if (socket.id === broadcaster || !broadcaster) {
+      console.log(`Trying to connect to Serial device at ${path}`)
+      serialPort = new SerialPort({ path, baudRate: 9600, autoOpen: false })
+      const parser = serialPort.pipe(new ReadlineParser())
+      parser.on('data', serialHandler)
+      serialPort.on('error', function (err) {
+        console.error(err);
+      });
+      try {
+        serialPort.open();
+      }
+      catch (error) {
+        console.error("Failed to connect to serial device")
+      }
+    }
   })
 });
 server.listen(port, () => console.log(`Server is running on port ${port}`));
