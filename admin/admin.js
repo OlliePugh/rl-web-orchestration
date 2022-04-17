@@ -2,36 +2,36 @@ const peerConnections = {};
 const config = {
   iceServers: [
     {
-      "urls": "stun:stun.l.google.com:19302",
+      urls: "stun:stun.l.google.com:19302",
     },
-    // { 
+    // {
     //   "urls": "turn:TURN_IP?transport=tcp",
     //   "username": "TURN_USERNAME",
     //   "credential": "TURN_CREDENTIALS"
     // }
-  ]
+  ],
 };
 
 // on start
 
-let serialDevices = []
+let serialDevices = [];
 
 const socket = io.connect(window.location.origin);
-socket.emit("getQueueSize")
-getSerial()
+socket.emit("getQueueSize");
+getSerial();
 
 socket.on("answer", (id, description) => {
   peerConnections[id].setRemoteDescription(description);
 });
 
-socket.on("watcher", id => {
+socket.on("watcher", (id) => {
   const peerConnection = new RTCPeerConnection(config);
   peerConnections[id] = peerConnection;
 
   let stream = videoElement.srcObject;
-  stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+  stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
 
-  peerConnection.onicecandidate = event => {
+  peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("candidate", id, event.candidate);
     }
@@ -39,7 +39,7 @@ socket.on("watcher", id => {
 
   peerConnection
     .createOffer()
-    .then(sdp => peerConnection.setLocalDescription(sdp))
+    .then((sdp) => peerConnection.setLocalDescription(sdp))
     .then(() => {
       socket.emit("offer", id, peerConnection.localDescription);
     });
@@ -49,23 +49,30 @@ socket.on("candidate", (id, candidate) => {
   peerConnections[id].addIceCandidate(new RTCIceCandidate(candidate));
 });
 
-socket.on("disconnectPeer", id => {
+socket.on("disconnectPeer", (id) => {
   if (peerConnections[id]) {
     peerConnections[id].close();
     delete peerConnections[id];
   }
 });
 
-socket.on("queueSize", amountInQueue => {
+socket.on("queueSize", (amountInQueue) => {
   document.getElementById("queue-counter").textContent = amountInQueue;
-})
+});
 
-socket.on("serialList", result => {  // BUG Does not work if user refreshes page because its a new socket id
+socket.on("serialList", (result) => {
+  // BUG Does not work if user refreshes page because its a new socket id
   serialDevices = result;
-  const friendlySerial = result.map(item => { return { friendlyName: item.friendlyName, value: item.path } });
-  const serialInput = document.getElementById("serial-input")
-  friendlySerial.forEach(friendlySerial => serialInput.add(new Option(friendlySerial.friendlyName, friendlySerial.value)));
-})
+  const friendlySerial = result.map((item) => {
+    return { friendlyName: item.friendlyName, value: item.path };
+  });
+  const serialInput = document.getElementById("serial-input");
+  friendlySerial.forEach((friendlySerial) =>
+    serialInput.add(
+      new Option(friendlySerial.friendlyName, friendlySerial.value)
+    )
+  );
+});
 
 window.onunload = window.onbeforeunload = () => {
   socket.close();
@@ -77,9 +84,7 @@ const videoSelect = document.querySelector("select#videoSource");
 
 videoSelect.onchange = getStream;
 
-getStream()
-  .then(getDevices)
-  .then(gotDevices);
+getStream().then(getDevices).then(gotDevices);
 
 function getDevices() {
   return navigator.mediaDevices.enumerateDevices();
@@ -99,13 +104,13 @@ function gotDevices(deviceInfos) {
 
 function getStream() {
   if (window.stream) {
-    window.stream.getTracks().forEach(track => {
+    window.stream.getTracks().forEach((track) => {
       track.stop();
     });
   }
   const videoSource = videoSelect.value;
   const constraints = {
-    video: { deviceId: videoSource ? { exact: videoSource } : undefined }
+    video: { deviceId: videoSource ? { exact: videoSource } : undefined },
   };
   return navigator.mediaDevices
     .getUserMedia(constraints)
@@ -116,7 +121,7 @@ function getStream() {
 function gotStream(stream) {
   window.stream = stream;
   videoSelect.selectedIndex = [...videoSelect.options].findIndex(
-    option => option.text === stream.getVideoTracks()[0].label
+    (option) => option.text === stream.getVideoTracks()[0].label
   );
   videoElement.srcObject = stream;
   socket.emit("broadcaster");
@@ -127,10 +132,10 @@ function handleError(error) {
 }
 
 function serialConnect() {
-  const serialInput = document.getElementById("serial-input")
+  const serialInput = document.getElementById("serial-input");
   const optionChosen = serialInput.options[serialInput.selectedIndex].value;
-  console.log(`Attempting to connect to ${optionChosen}`)
-  socket.emit("serialConnect", optionChosen)
+  console.log(`Attempting to connect to ${optionChosen}`);
+  socket.emit("serialConnect", optionChosen);
 }
 
 function getSerial() {
