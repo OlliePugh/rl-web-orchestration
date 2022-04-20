@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const adminInfo = require("../admin-details");
 const { SerialPort, ReadlineParser } = require("serialport");
-const { serialHandler, dispatchControlState } = require("./serial-handler");
+const { serialHandler, dispatchControlState, raiseLift, lowerLift } = require("./serial-handler");
 
 const resetControlsState = () => {
   controllerState = [
@@ -155,6 +155,18 @@ io.sockets.on("connection", (socket) => {
       } catch (error) {
         console.error("Failed to connect to serial device");
       }
+    }
+  });
+  socket.on("lowerLift", () => {
+    if (socket.id === broadcaster) {
+      console.log("lowering lift");
+      lowerLift(serialPort);
+    }
+  });
+  socket.on("raiseLift", () => {
+    if (socket.id === broadcaster) {
+      console.log("raise lift");
+      raiseLift(serialPort);
     }
   });
 });
