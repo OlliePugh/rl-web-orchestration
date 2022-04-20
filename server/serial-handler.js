@@ -21,14 +21,11 @@ const dispatchControlState = async (port, controlState, force) => {
   try {
     clearTimeout(retryTimeout);
     retryTimeout = null;
-    const toSend = JSON.stringify(controlState);
+    const toSend = JSON.stringify({event: "controls", data: controlState});
     console.log(`writing to arena: ${toSend}`);
     lastControlDispatchTime = Date.now();
-    if (port.isOpen()) {
-      await port.write(toSend);
-    } else {
-      console.log("Trying to send data to closed serial port");
-    }
+    await port.write(toSend);
+    
   } catch (e) {
     console.error(`Error writing to serial device ${e}`);
   }

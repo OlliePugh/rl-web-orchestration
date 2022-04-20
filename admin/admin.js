@@ -64,7 +64,7 @@ socket.on("serialList", (result) => {
   // BUG Does not work if user refreshes page because its a new socket id
   serialDevices = result;
   const friendlySerial = result.map((item) => {
-    return { friendlyName: item.friendlyName, value: item.path };
+    return { friendlyName: item.friendlyName || item.path, value: item.path };
   });
   const serialInput = document.getElementById("serial-input");
   friendlySerial.forEach((friendlySerial) =>
@@ -139,5 +139,6 @@ function serialConnect() {
 }
 
 function getSerial() {
+  console.log("getting serial")
   socket.emit("listSerial");
 }

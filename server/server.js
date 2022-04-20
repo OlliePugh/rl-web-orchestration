@@ -112,8 +112,12 @@ io.sockets.on("connection", (socket) => {
     socket.emit("queueSize", queue.length);
   });
   socket.on("listSerial", async () => {
+    console.log(await SerialPort.list())
     if (socket.id === broadcaster || !broadcaster) {
       socket.emit("serialList", await SerialPort.list());
+    }
+    else {
+      console.log("non admin requested serial list")
     }
   });
   socket.on("join_queue", () => {
@@ -129,24 +133,26 @@ io.sockets.on("connection", (socket) => {
   socket.on("controlDownCommand", (message) => {
     const playerNum = currentMatch.indexOf(socket.id);
     controllerState[playerNum][message] = true;
-    dispatchControlState(controllerState, controllerState);
+    dispatchControlState(serialPort, controllerState);
   });
   socket.on("controlUpCommand", (message) => {
     const playerNum = currentMatch.indexOf(socket.id);
     controllerState[playerNum][message] = false;
-    dispatchControlState(controllerState, controllerState);
+    dispatchControlState(serialPort, controllerState);
   });
   socket.on("serialConnect", (path) => {
     if (socket.id === broadcaster || !broadcaster) {
       console.log(`Trying to connect to Serial device at ${path}`);
-      serialPort = new SerialPort({ path, baudRate: 9600, autoOpen: false });
+      serialPort = new SerialPort({ path, baudRate: 57600, autoOpen: false });
       const parser = serialPort.pipe(new ReadlineParser());
       parser.on("data", serialHandler);
       serialPort.on("error", function (err) {
         console.error(err);
       });
       try {
-        serialPort.open();
+        serialPort.open(() => {
+          console.log("Successfully connected to serial device")
+        });
       } catch (error) {
         console.error("Failed to connect to serial device");
       }
