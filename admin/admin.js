@@ -139,16 +139,16 @@ function serialConnect() {
 }
 
 function getSerial() {
-  console.log("getting serial")
+  console.log("getting serial");
   socket.emit("listSerial");
 }
 
 function lowerLift() {
-  console.log("lowering lift")
+  console.log("lowering lift");
   socket.emit("lowerLift");
 }
 
 function raiseLift() {
-  console.log("raising lift")
+  console.log("raising lift");
   socket.emit("raiseLift");
 }

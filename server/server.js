@@ -2,7 +2,12 @@ const express = require("express");
 const app = express();
 const adminInfo = require("../admin-details");
 const { SerialPort, ReadlineParser } = require("serialport");
-const { serialHandler, dispatchControlState, raiseLift, lowerLift } = require("./serial-handler");
+const {
+  serialHandler,
+  dispatchControlState,
+  raiseLift,
+  lowerLift,
+} = require("./serial-handler");
 
 const resetControlsState = () => {
   controllerState = [
@@ -114,9 +119,8 @@ io.sockets.on("connection", (socket) => {
   socket.on("listSerial", async () => {
     if (socket.id === broadcaster || !broadcaster) {
       socket.emit("serialList", await SerialPort.list());
-    }
-    else {
-      console.log("non admin requested serial list")
+    } else {
+      console.log("non admin requested serial list");
     }
   });
   socket.on("join_queue", () => {
@@ -150,7 +154,7 @@ io.sockets.on("connection", (socket) => {
       });
       try {
         serialPort.open(() => {
-          console.log("Successfully connected to serial device")
+          console.log("Successfully connected to serial device");
         });
       } catch (error) {
         console.error("Failed to connect to serial device");

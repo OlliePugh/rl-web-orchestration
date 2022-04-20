@@ -3,17 +3,25 @@ let lastControlDispatchState;
 let retryTimeout;
 const controlDispatchMinFreq = 25; // every 25 ms
 
+const safeWrite = async (port, msg) => {  // just surpresses any errors
+  try {
+    await port.write(msg)
+  } catch {
+    console.error(`Failed to write: ${msg} to serial - has it been connected?`)
+  }
+}
+
 const serialHandler = (contents) => {
   console.log(`Serial says: ${contents}`);
 };
 
 const lowerLift = (port) => {
-  port.write(JSON.stringify({ event: "lift", data: "lower" }));
-}
+  safeWrite(port, JSON.stringify({ event: "lift", data: "lower" }));
+};
 
 const raiseLift = (port) => {
-  port.write(JSON.stringify({ event: "lift", data: "raise" }));
-}
+  safeWrite(port, JSON.stringify({ event: "lift", data: "raise" }));
+};
 
 const dispatchControlState = async (port, controlState, force) => {
   lastControlDispatchState = controlState;
@@ -31,8 +39,7 @@ const dispatchControlState = async (port, controlState, force) => {
     retryTimeout = null;
     const toSend = JSON.stringify({ event: "controls", data: controlState });
     lastControlDispatchTime = Date.now();
-    await port.write(toSend);
-
+    await safeWrite(port, toSend);
   } catch (e) {
     console.error(`Error writing to serial device ${e}`);
   }
@@ -42,5 +49,5 @@ module.exports = {
   serialHandler,
   dispatchControlState,
   lowerLift,
-  raiseLift
+  raiseLift,
 };
