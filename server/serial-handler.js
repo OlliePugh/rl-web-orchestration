@@ -3,8 +3,8 @@ let lastControlDispatchState;
 let retryTimeout;
 const controlDispatchMinFreq = 25; // every 25 ms
 
-const serialHandler = () => {
-  console.log("Serial Called");
+const serialHandler = (contents) => {
+  console.log(`Serial says: ${contents}`);
 };
 
 const dispatchControlState = async (port, controlState, force) => {
@@ -22,7 +22,6 @@ const dispatchControlState = async (port, controlState, force) => {
     clearTimeout(retryTimeout);
     retryTimeout = null;
     const toSend = JSON.stringify({event: "controls", data: controlState});
-    console.log(`writing to arena: ${toSend}`);
     lastControlDispatchTime = Date.now();
     await port.write(toSend);
     

@@ -112,7 +112,6 @@ io.sockets.on("connection", (socket) => {
     socket.emit("queueSize", queue.length);
   });
   socket.on("listSerial", async () => {
-    console.log(await SerialPort.list())
     if (socket.id === broadcaster || !broadcaster) {
       socket.emit("serialList", await SerialPort.list());
     }
