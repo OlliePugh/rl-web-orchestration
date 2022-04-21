@@ -3,13 +3,14 @@ let lastControlDispatchState;
 let retryTimeout;
 const controlDispatchMinFreq = 25; // every 25 ms
 
-const safeWrite = async (port, msg) => {  // just surpresses any errors
+const safeWrite = async (port, msg) => {
+  // just surpresses any errors
   try {
-    await port.write(msg)
+    await port.write(msg);
   } catch {
-    console.error(`Failed to write: ${msg} to serial - has it been connected?`)
+    console.error(`Failed to write: ${msg} to serial - has it been connected?`);
   }
-}
+};
 
 const serialHandler = (contents) => {
   console.log(`Serial says: ${contents}`);
