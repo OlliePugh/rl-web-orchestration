@@ -54,6 +54,10 @@ socket.on("candidate", (id, candidate) => {
     .catch((e) => console.error(e));
 });
 
+socket.on("message", (content) => {
+  document.getElementById("message-header").innerText = content;
+});
+
 window.onunload = window.onbeforeunload = () => {
   socket.close();
   peerConnection.close();

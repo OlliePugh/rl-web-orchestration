@@ -173,5 +173,11 @@ io.sockets.on("connection", (socket) => {
       raiseLift(serialPort);
     }
   });
+  socket.on("broadcastMessage", (message) => {
+    if (socket.id === broadcaster) {
+      console.log(`Broadcasting message: ${message}`);
+      socket.broadcast.emit("message", message);
+    }
+  });
 });
 server.listen(port, () => console.log(`Server is running on port ${port}`));

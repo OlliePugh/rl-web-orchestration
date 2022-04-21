@@ -138,6 +138,11 @@ function serialConnect() {
   socket.emit("serialConnect", optionChosen);
 }
 
+function broadcastMessage() {
+  const broadcastMessageInput = document.getElementById("message-dispatch");
+  socket.emit("broadcastMessage", broadcastMessageInput.value);
+}
+
 function getSerial() {
   console.log("getting serial");
   socket.emit("listSerial");
