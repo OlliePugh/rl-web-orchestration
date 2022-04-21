@@ -13,7 +13,7 @@ Start the application using Node:
 npm install
 
 # Run the server
-node server
+npm start
 ```
 
 Start the application using Docker:
