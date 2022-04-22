@@ -17,11 +17,11 @@ const serialHandler = (contents) => {
 };
 
 const lowerLift = (port) => {
-  safeWrite(port, JSON.stringify({ event: "lift", data: "lower" }));
+  safeWrite(port, JSON.stringify({ event: "lift", data: {"liftDown": false} })); // TODO make these the correct way round
 };
 
 const raiseLift = (port) => {
-  safeWrite(port, JSON.stringify({ event: "lift", data: "raise" }));
+  safeWrite(port, JSON.stringify({ event: "lift", data: {"liftDown": true} }));
 };
 
 const dispatchControlState = async (port, controlState, force) => {
