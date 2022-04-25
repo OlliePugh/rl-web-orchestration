@@ -18,6 +18,10 @@ class GameController {
     this.resetControlsState();
   }
 
+  isGameLive = () => {
+    return this.currentMatch.length == 2;
+  };
+
   resetControlsState = () => {
     this.controllerState = [
       {
@@ -35,8 +39,8 @@ class GameController {
     ];
   };
 
-  checkQueueStatus = (socket) => {
-    socket.to(this.broadcaster).emit("queueSize", this.queue.length);
+  checkQueueStatus = () => {
+    io.sockets.to(this.broadcaster).emit("queueSize", this.queue.length);
     if (this.queue.length >= 2) {
       // TODO make sure that a game is not currently in progress
       this.startMatch(this.queue[0], this.queue[1]);
@@ -71,6 +75,7 @@ class GameController {
       this.currentMatch = [];
       this.resetControlsState();
       dispatchControlState(serialPort, this.controllerState); // tell the arena to kill all movement (even though it should of already done it)
+      this.checkQueueStatus();
     }
   };
 
@@ -153,7 +158,7 @@ io.sockets.on("connection", (socket) => {
       console.log(`Adding user to queue ${socket.id}`);
       gameController.addToQueue(socket.id);
     }
-    gameController.checkQueueStatus(socket); // check the status of the queue
+    gameController.checkQueueStatus(); // check the status of the queue
   });
   socket.on("leave_queue", () => {
     gameController.removeFromQueue(socket, socket.id);
