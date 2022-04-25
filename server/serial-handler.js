@@ -12,16 +12,25 @@ const safeWrite = async (port, msg) => {
   }
 };
 
-const serialHandler = (contents) => {
+const serialHandler = (contents, gameController) => {
   console.log(`Serial says: ${contents}`);
+  try {
+    message = JSON.parse(contents);
+
+    if (message.event === "goalScored") {
+      gameController.declareWinner(message.data.player);
+    }
+  } catch {
+    console.log("Non event log");
+  }
 };
 
 const lowerLift = (port) => {
-  safeWrite(port, JSON.stringify({ event: "lift", data: {"liftDown": false} })); // TODO make these the correct way round
+  safeWrite(port, JSON.stringify({ event: "lift", data: { liftDown: false } })); // TODO make these the correct way round
 };
 
 const raiseLift = (port) => {
-  safeWrite(port, JSON.stringify({ event: "lift", data: {"liftDown": true} }));
+  safeWrite(port, JSON.stringify({ event: "lift", data: { liftDown: true } }));
 };
 
 const dispatchControlState = async (port, controlState, force) => {
@@ -38,7 +47,10 @@ const dispatchControlState = async (port, controlState, force) => {
   try {
     clearTimeout(retryTimeout);
     retryTimeout = null;
-    const toSend = JSON.stringify({ event: "controls", data: controlState });
+    const toSend = JSON.stringify({
+      event: "controls",
+      data: controlState,
+    });
     lastControlDispatchTime = Date.now();
     await safeWrite(port, toSend);
   } catch (e) {
