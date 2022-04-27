@@ -164,14 +164,14 @@ io.sockets.on("connection", (socket) => {
     gameController.removeFromQueue(socket, socket.id);
   });
   socket.on("controlDownCommand", (message) => {
-    const playerNum = currentMatch.indexOf(socket.id);
+    const playerNum = gameController.currentMatch.indexOf(socket.id);
     gameController.controllerState[playerNum][message] = true;
-    dispatchControlState(serialPort, controllerState);
+    dispatchControlState(serialPort, gameController.controllerState);
   });
   socket.on("controlUpCommand", (message) => {
-    const playerNum = currentMatch.indexOf(socket.id);
-    controllerState[playerNum][message] = false;
-    dispatchControlState(serialPort, controllerState);
+    const playerNum = gameController.currentMatch.indexOf(socket.id);
+    gameController.controllerState[playerNum][message] = false;
+    dispatchControlState(serialPort, gameController.controllerState);
   });
   socket.on("serialConnect", (path) => {
     if (
