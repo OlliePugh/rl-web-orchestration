@@ -13,6 +13,7 @@ class GameController {
   constructor() {
     this.broadcaster;
     this.queue = [];
+    this.premades = new Map();
     this.currentMatch = [];
     this.controllerState;
     this.resetControlsState();
@@ -90,6 +91,21 @@ class GameController {
       io.sockets.to(this.broadcaster).emit("queueSize", this.queue.length);
     }
   };
+
+  addToPremades = (lobbyLeader, player) => {
+    gameController.premades.set(lobbyLeader, player);
+  };
+
+  removePremades = (lobbyLeader) => {
+    gameController.premades.delete(lobbyLeader);
+  };
+
+  isInPremade = (player) => {
+    return (
+      this.premades.has(player) ||
+      Array.from(this.premades.values()).includes(player)
+    );
+  };
 }
 
 const port = 30120;
@@ -139,6 +155,19 @@ io.sockets.on("connection", (socket) => {
     }
     socket.to(gameController.broadcaster).emit("disconnectPeer", socket.id);
     gameController.removeFromQueue(socket.id);
+    if (gameController.isInPremade(socket.id)) {
+      for (let [lobbyLeader, player] of gameController.premades.entries()) {
+        if (lobbyLeader === socket.id) {
+          socket.to(player).emit("lobbyDisband");
+          gameController.removePremades(lobbyLeader);
+          break;
+        } else if (player === socket.id) {
+          socket.to(lobbyLeader).emit("message", "Player has left lobby");
+          gameController.removePremades(lobbyLeader);
+          break;
+        }
+      }
+    }
   });
   socket.on("getQueueSize", () => {
     socket.emit("queueSize", gameController.queue.length);
@@ -219,6 +248,24 @@ io.sockets.on("connection", (socket) => {
     if (socket.id === gameController.broadcaster) {
       console.log(`Broadcasting message: ${message}`);
       socket.broadcast.emit("message", message);
+    }
+  });
+  socket.on("lobbyJoin", (lobbyLeader) => {
+    console.log("someone joined lobby");
+    if (gameController.isInPremade(lobbyLeader)) {
+      socket.emit("message", "Lobby is full!");
+      return;
+    }
+    gameController.addToPremades(lobbyLeader, socket.id); // add this user to the lobby
+    socket.emit("message", "Successfully joined lobby");
+    socket.to(lobbyLeader).emit("message", "Player joined lobby");
+  });
+
+  socket.on("leaveLobby", () => {
+    if (gameController.isInPremade(lobbyLeader)) {
+      removePremades(lobbyLeader);
+      socket.emit("message", "Successfully left lobby");
+      socket.to(lobbyLeader).emit("message", "Player has left your lobby");
     }
   });
 });
