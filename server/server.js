@@ -170,7 +170,10 @@ io.sockets.on("connection", (socket) => {
   });
   socket.on("controlUpCommand", (message) => {
     const playerNum = gameController.currentMatch.indexOf(socket.id);
-    gameController.controllerState[playerNum][message] = false;
+
+    if (playerNum) {
+      gameController.controllerState[playerNum][message] = false;
+    }
     dispatchControlState(serialPort, gameController.controllerState);
   });
   socket.on("serialConnect", (path) => {
