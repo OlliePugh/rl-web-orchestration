@@ -42,9 +42,22 @@ class GameController {
 
   checkQueueStatus = () => {
     io.sockets.to(this.broadcaster).emit("queueSize", this.queue.length);
+    // TODO make sure that a game is not currently in progress
+
+    if (this.isInPremade(this.queue[0])) {
+      this.startMatch(this.queue[0], this.premades.get(this.queue[0]));
+      return;
+    }
+
     if (this.queue.length >= 2) {
-      // TODO make sure that a game is not currently in progress
-      this.startMatch(this.queue[0], this.queue[1]);
+      for (let i = 0; i < this.queue.slice(1).length; i++) {
+        // first player is not in premade, therefore look for next non premade player
+        const player = this.queue.slice(1)[i];
+        if (!this.isInPremade(player)) {
+          this.startMatch(this.queue[0], player);
+          return;
+        }
+      }
     }
   };
 
@@ -52,12 +65,12 @@ class GameController {
     io.sockets.to(this.broadcaster).emit("watcher", player1); // send video to first client
     io.sockets.to(this.broadcaster).emit("watcher", player2); // send video to second client
     console.log(`Starting game: ${player1} vs ${player2}`);
-    this.removeFromQueue(this.queue[0]);
-    this.removeFromQueue(this.queue[0]);
+    this.removeFromQueue(player1);
+    this.removeFromQueue(player2);
     this.currentMatch = [player1, player2];
   };
 
-  declareWinner = async (winner) => {
+  declareWinner = async (winner, extraMessage = "") => {
     if (this.currentMatch.length != 0) {
       // make sure a game is currently underway
       console.log(`${this.currentMatch[winner - 1]} wins the game!`);
@@ -66,10 +79,16 @@ class GameController {
         .emit("disconnectPeer", this.currentMatch[0]);
       io.sockets
         .to(this.currentMatch[0])
-        .emit("message", winner == 1 ? "You Win!" : "You lost...");
+        .emit(
+          "message",
+          winner == 1 ? "You Win!" : "You lost... " + extraMessage
+        );
       io.sockets
         .to(this.currentMatch[1])
-        .emit("message", winner == 2 ? "You Win!" : "You lost...");
+        .emit(
+          "message",
+          winner == 2 ? "You Win!" : "You lost... " + extraMessage
+        );
       io.sockets
         .to(this.broadcaster)
         .emit("disconnectPeer", this.currentMatch[1]);
@@ -168,6 +187,13 @@ io.sockets.on("connection", (socket) => {
         }
       }
     }
+
+    if (gameController.currentMatch.includes(socket.id)) {
+      declareWinner(
+        currenMatch[1 - currentMatch.indexOf(socket.id)],
+        "Player disconnected"
+      ); // opposite player
+    }
   });
   socket.on("getQueueSize", () => {
     socket.emit("queueSize", gameController.queue.length);
@@ -183,6 +209,7 @@ io.sockets.on("connection", (socket) => {
     }
   });
   socket.on("join_queue", () => {
+    // TODO make sure user is not in party
     if (!gameController.queue.includes(socket.id)) {
       console.log(`Adding user to queue ${socket.id}`);
       gameController.addToQueue(socket.id);
