@@ -160,3 +160,8 @@ function raiseLift() {
   console.log("raising lift");
   socket.emit("raiseLift");
 }
+
+function endMatch() {
+  console.log("ending match");
+  socket.emit("endMatch");
+}

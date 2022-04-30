@@ -6,9 +6,16 @@
     <link href="/styles.css" rel="stylesheet" />
   </head>
   <body>
-    <h1 id="message-header"></h1>
+    <h1>Missile Championship</h1>
+    <h3 id="message-header"></h3>
     <video playsinline autoplay muted></video>
     <button id="join-queue">Join Queue</button>
+    <div id="lobby-join">
+      <h2>Want to play against a friend?</h2>
+      <button id="get-friends-link-button" onclick="copyFriendsLink()">
+        Get link
+      </button>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/client.js"></script>
   </body>
