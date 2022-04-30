@@ -42,20 +42,21 @@ class GameController {
 
   checkQueueStatus = () => {
     io.sockets.to(this.broadcaster).emit("queueSize", this.queue.length);
-    // TODO make sure that a game is not currently in progress
 
-    if (this.isInPremade(this.queue[0])) {
-      this.startMatch(this.queue[0], this.premades.get(this.queue[0]));
-      return;
-    }
+    if (this.currentMatch.length === 0) {
+      if (this.isInPremade(this.queue[0])) {
+        this.startMatch(this.queue[0], this.premades.get(this.queue[0]));
+        return;
+      }
 
-    if (this.queue.length >= 2) {
-      for (let i = 0; i < this.queue.slice(1).length; i++) {
-        // first player is not in premade, therefore look for next non premade player
-        const player = this.queue.slice(1)[i];
-        if (!this.isInPremade(player)) {
-          this.startMatch(this.queue[0], player);
-          return;
+      if (this.queue.length >= 2) {
+        for (let i = 0; i < this.queue.slice(1).length; i++) {
+          // first player is not in premade, therefore look for next non premade player
+          const player = this.queue.slice(1)[i];
+          if (!this.isInPremade(player)) {
+            this.startMatch(this.queue[0], player);
+            return;
+          }
         }
       }
     }
@@ -101,7 +102,8 @@ class GameController {
       this.currentMatch = [];
       this.resetControlsState();
       dispatchControlState(serialPort, this.controllerState); // tell the arena to kill all movement (even though it should of already done it)
-      this.checkQueueStatus();
+      // TODO need to wait for the arena to say that its ready to start the next game
+      this.checkQueueStatus(); // get ready to start the next game
     }
   };
 
