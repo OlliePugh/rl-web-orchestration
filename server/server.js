@@ -64,6 +64,12 @@ class GameController {
   startMatch = (player1, player2) => {
     io.sockets.to(this.broadcaster).emit("watcher", player1); // send video to first client
     io.sockets.to(this.broadcaster).emit("watcher", player2); // send video to second client
+    io.sockets
+      .to(player1)
+      .emit("message", "You are the blue car! Score in the left goal!");
+    io.sockets
+      .to(player2)
+      .emit("message", "You are the red car! Score in the right goal!");
     console.log(`Starting game: ${player1} vs ${player2}`);
     this.removeFromQueue(player1);
     this.removeFromQueue(player2);
@@ -81,13 +87,13 @@ class GameController {
         .to(this.currentMatch[0])
         .emit(
           "message",
-          winner == 1 ? "You Win!" : "You lost... " + extraMessage
+          (winner == 1 ? "You Win!" : "You lost...") + " " + extraMessage
         );
       io.sockets
         .to(this.currentMatch[1])
         .emit(
           "message",
-          winner == 2 ? "You Win!" : "You lost... " + extraMessage
+          (winner == 2 ? "You Win!" : "You lost...") + " " + extraMessage
         );
       io.sockets
         .to(this.broadcaster)
@@ -189,9 +195,9 @@ io.sockets.on("connection", (socket) => {
     }
 
     if (gameController.currentMatch.includes(socket.id)) {
-      declareWinner(
-        currenMatch[1 - currentMatch.indexOf(socket.id)],
-        "Player disconnected"
+      gameController.declareWinner(
+        1 - gameController.currentMatch.indexOf(socket.id) + 1,
+        "opponent disconnected"
       ); // opposite player
     }
   });
@@ -209,8 +215,10 @@ io.sockets.on("connection", (socket) => {
     }
   });
   socket.on("join_queue", () => {
-    // TODO make sure user is not in party
-    if (!gameController.queue.includes(socket.id)) {
+    if (
+      !gameController.queue.includes(socket.id) &&
+      !gameController.isInPremade(socket.id)
+    ) {
       console.log(`Adding user to queue ${socket.id}`);
       gameController.addToQueue(socket.id);
     }
@@ -221,16 +229,18 @@ io.sockets.on("connection", (socket) => {
   });
   socket.on("controlDownCommand", (message) => {
     const playerNum = gameController.currentMatch.indexOf(socket.id);
-    gameController.controllerState[playerNum][message] = true;
-    dispatchControlState(serialPort, gameController.controllerState);
+    if (playerNum !== -1) {
+      gameController.controllerState[playerNum][message] = true;
+      dispatchControlState(serialPort, gameController.controllerState);
+    }
   });
   socket.on("controlUpCommand", (message) => {
     const playerNum = gameController.currentMatch.indexOf(socket.id);
 
-    if (playerNum) {
+    if (playerNum !== -1) {
       gameController.controllerState[playerNum][message] = false;
+      dispatchControlState(serialPort, gameController.controllerState);
     }
-    dispatchControlState(serialPort, gameController.controllerState);
   });
   socket.on("serialConnect", (path) => {
     if (
@@ -293,6 +303,12 @@ io.sockets.on("connection", (socket) => {
       removePremades(lobbyLeader);
       socket.emit("message", "Successfully left lobby");
       socket.to(lobbyLeader).emit("message", "Player has left your lobby");
+    }
+  });
+
+  socket.on("endMatch", () => {
+    if (socket.id === gameController.broadcaster) {
+      gameController.declareWinner(1, "Admin has ended the game");
     }
   });
 });
