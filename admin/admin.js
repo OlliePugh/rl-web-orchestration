@@ -16,7 +16,7 @@ const config = {
 
 let serialDevices = [];
 
-const socket = io.connect(window.location.origin);
+const socket = io.connect(window.location.origin, { secure: true });
 socket.emit("getQueueSize");
 getSerial();
 

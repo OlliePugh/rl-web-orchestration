@@ -32,7 +32,7 @@ location.search
     queryDict[item.split("=")[0]] = item.split("=")[1];
   }); // stores get params
 
-const socket = io.connect(window.location.origin);
+const socket = io.connect(window.location.origin, { secure: true });
 
 socket.on("connect", function () {
   sessionId = socket.id;

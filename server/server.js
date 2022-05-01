@@ -1,4 +1,7 @@
 const express = require("express");
+const http = require("http");
+const https = require("https");
+const fs = require("fs");
 const app = express();
 const adminInfo = require("../admin-details");
 const { SerialPort, ReadlineParser } = require("serialport");
@@ -135,14 +138,26 @@ class GameController {
   };
 }
 
-const port = 30120;
 let serialPort;
 
-const http = require("http");
-const server = http.createServer(app);
-const io = require("socket.io")(server);
+var options = {
+  key: fs.readFileSync("keys/olliepugh_com.key"),
+  cert: fs.readFileSync("keys/olliepugh_com.crt"),
+};
+
+const server = http.createServer(app).listen(80, () => {
+  console.log("HTTP Server started");
+});
+const serverSsl = https.createServer(options, app).listen(443, () => {
+  console.log("HTTPS Server started");
+});
+const io = require("socket.io")(serverSsl);
 
 // setup routing
+app.enable("trust proxy"); // enforce https
+app.use((req, res, next) => {
+  req.secure ? next() : res.redirect("https://" + req.headers.host + req.url);
+});
 app.use(express.static(`${__dirname}/../public`));
 app.use((req, res, next) => {
   const auth = {
@@ -316,5 +331,3 @@ io.sockets.on("connection", (socket) => {
 });
 
 const gameController = new GameController();
-
-server.listen(port, () => console.log(`Server is running on port ${port}`));
