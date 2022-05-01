@@ -114,7 +114,7 @@ const displayFriendLink = (display) => {
 
 const copyFriendsLink = () => {
   const url =
-    "http://" + location.host + location.pathname + "?team=" + sessionId;
+    "https://" + location.host + location.pathname + "?team=" + sessionId;
   navigator.clipboard.writeText(url);
   alert("Copied link to clipboard");
 };
