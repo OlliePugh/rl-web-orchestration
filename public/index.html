@@ -5,7 +5,10 @@
     <meta charset="UTF-8" />
     <link href="/styles.css" rel="stylesheet" />
   </head>
+
   <body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/client.js"></script>
     <h1>Missile Championship</h1>
     <h3 id="message-header"></h3>
     <h3 id="clock"></h3>
@@ -37,5 +40,21 @@
     </h2>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/client.js"></script>
+    <div class="touch-button" style="bottom: 300px; left: 50px">
+      <h1>↑</h1>
+      <canvas id="N-canvas"></canvas>
+    </div>
+    <div class="touch-button" style="bottom: 50px; left: 50px">
+      <h1>↓</h1>
+      <canvas id="S-canvas"></canvas>
+    </div>
+    <div class="touch-button" style="bottom: 50px; right: 50px">
+      <h1>→</h1>
+      <canvas id="E-canvas"></canvas>
+    </div>
+    <div class="touch-button" style="bottom: 50px; right: 300px">
+      <h1>←</h1>
+      <canvas id="W-canvas"></canvas>
+    </div>
   </body>
 </html>

@@ -7,3 +7,24 @@ video {
   width: 700px;
   height: 500px;
 }
+
+/* .touch-button {
+  display:  none;
+} */
+
+@media only screen and (hover: none) and (pointer: coarse) {
+  .touch-button {
+    display: block;
+    width: 20%;
+    position: absolute;
+    height: 0;
+    padding-bottom: 20%;
+    border: 3px black solid;
+  }
+
+  .touch-button h1 {
+    font-size: 100px;
+    margin: 0;
+    text-align: center;
+  }
+}

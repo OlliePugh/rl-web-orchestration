@@ -164,6 +164,20 @@ const copyFriendsLink = () => {
   alert("Copied link to clipboard");
 };
 
+const setupMobileControls = () => {
+  ["N", "E", "S", "W"].forEach((direction) => {
+    const el = document.getElementById(`${direction}-canvas`);
+    el.addEventListener("touchstart", () => {
+      console.log(`down ${direction}`);
+      socket.emit("controlDownCommand", direction);
+    });
+    el.addEventListener("touchend", () => {
+      console.log(`up ${direction}`);
+      socket.emit("controlUpCommand", direction);
+    });
+  });
+};
+
 document.addEventListener("keydown", (event) => {
   if (!event.repeat) {
     // only on state change
@@ -178,3 +192,5 @@ document.addEventListener("keyup", (event) => {
     socket.emit("controlUpCommand", controlMap[event.code]);
   }
 });
+
+setupMobileControls();
