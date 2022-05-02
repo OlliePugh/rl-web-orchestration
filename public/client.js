@@ -1,3 +1,7 @@
+const GAME_LENGTH = 300_000;
+
+let gameTimer;
+
 let peerConnection;
 const config = {
   iceServers: [
@@ -36,7 +40,6 @@ const socket = io.connect(window.location.origin, { secure: true });
 
 socket.on("connect", function () {
   sessionId = socket.id;
-  console.log(queryDict);
   if (queryDict.team) {
     // is joining lobby
     socket.emit("lobbyJoin", queryDict.team);
@@ -86,22 +89,58 @@ socket.on("lobbyDisband", () => {
   displayFriendLink(true);
 });
 
+socket.on("startMatch", () => {
+  startTimer();
+  displayVideoStream(true);
+});
+
+socket.on("endMatch", () => {
+  finishTimer();
+  displayVideoStream(false);
+});
+
 window.onunload = window.onbeforeunload = () => {
   socket.close();
   peerConnection.close();
 };
 
 function joinQueue() {
-  console.log(`joining queue`);
   socket.emit("join_queue");
   inQueue = true;
 }
 
 function leaveQueue() {
-  console.log(`$leaving queue`);
   socket.emit("leave_queue");
   inQueue = true;
 }
+
+const startTimer = () => {
+  gameEndTime = new Date(Date.now() + GAME_LENGTH);
+  gameTimer = setInterval(function () {
+    // Get today's date and time
+    let now = new Date().getTime();
+
+    // Find the distance between now and the count down date
+    let distance = gameEndTime - now;
+
+    // Time calculations for days, hours, minutes and seconds
+    let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    // Display the result in the element with id="demo"
+    document.getElementById("clock").textContent = minutes + ":" + seconds;
+
+    // If the count down is finished, write some text
+    if (distance < 0) {
+      finishTimer();
+    }
+  }, 1000);
+};
+
+const finishTimer = () => {
+  clearInterval(gameTimer);
+  document.getElementById("clock").textContent = "";
+};
 
 const displayFriendLink = (display) => {
   document.getElementById("join-queue").style.display = display
@@ -110,6 +149,12 @@ const displayFriendLink = (display) => {
   document.getElementById("lobby-join").style.display = display
     ? "block "
     : "none";
+};
+
+const displayVideoStream = (display) => {
+  document.getElementById("video-stream").style.visibility = display
+    ? "visible"
+    : "hidden";
 };
 
 const copyFriendsLink = () => {

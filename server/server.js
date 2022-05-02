@@ -12,6 +12,8 @@ const {
   lowerLift,
 } = require("./serial-handler");
 
+const GAME_LENGTH = 300_000; // ms
+
 class GameController {
   constructor() {
     this.broadcaster;
@@ -20,6 +22,7 @@ class GameController {
     this.currentMatch = [];
     this.controllerState;
     this.resetControlsState();
+    this.endGameTimer;
   }
 
   isGameLive = () => {
@@ -68,6 +71,8 @@ class GameController {
   startMatch = (player1, player2) => {
     io.sockets.to(this.broadcaster).emit("watcher", player1); // send video to first client
     io.sockets.to(this.broadcaster).emit("watcher", player2); // send video to second client
+    io.sockets.to(player1).emit("startMatch");
+    io.sockets.to(player2).emit("startMatch");
     io.sockets
       .to(player1)
       .emit("message", "You are the blue car! Score in the left goal!");
@@ -78,27 +83,44 @@ class GameController {
     this.removeFromQueue(player1);
     this.removeFromQueue(player2);
     this.currentMatch = [player1, player2];
+    this.endGameTimer = setTimeout(() => {
+      this.declareWinner(null, "Ran out of time!");
+    }, GAME_LENGTH);
   };
 
   declareWinner = async (winner, extraMessage = "") => {
+    clearTimeout(this.endGameTimer); // remove the game timer
+
+    io.sockets.to(this.currentMatch[0]).emit("endMatch");
+    io.sockets.to(this.currentMatch[1]).emit("endMatch");
+
     if (this.currentMatch.length != 0) {
-      // make sure a game is currently underway
-      console.log(`${this.currentMatch[winner - 1]} wins the game!`);
-      io.sockets
-        .to(this.broadcaster)
-        .emit("disconnectPeer", this.currentMatch[0]);
-      io.sockets
-        .to(this.currentMatch[0])
-        .emit(
-          "message",
-          (winner == 1 ? "You Win!" : "You lost...") + " " + extraMessage
-        );
-      io.sockets
-        .to(this.currentMatch[1])
-        .emit(
-          "message",
-          (winner == 2 ? "You Win!" : "You lost...") + " " + extraMessage
-        );
+      if (winner) {
+        // make sure a game is currently underway
+        console.log(`${this.currentMatch[winner - 1]} wins the game!`);
+        io.sockets
+          .to(this.broadcaster)
+          .emit("disconnectPeer", this.currentMatch[0]);
+        io.sockets
+          .to(this.currentMatch[0])
+          .emit(
+            "message",
+            (winner == 1 ? "You Win!" : "You lost...") + " " + extraMessage
+          );
+        io.sockets
+          .to(this.currentMatch[1])
+          .emit(
+            "message",
+            (winner == 2 ? "You Win!" : "You lost...") + " " + extraMessage
+          );
+      } else {
+        io.sockets
+          .to(this.currentMatch[0])
+          .emit("message", "Its a tie! " + extraMessage);
+        io.sockets
+          .to(this.currentMatch[1])
+          .emit("message", "Its a tie! " + extraMessage);
+      }
       io.sockets
         .to(this.broadcaster)
         .emit("disconnectPeer", this.currentMatch[1]);
@@ -325,7 +347,7 @@ io.sockets.on("connection", (socket) => {
 
   socket.on("endMatch", () => {
     if (socket.id === gameController.broadcaster) {
-      gameController.declareWinner(1, "Admin has ended the game");
+      gameController.declareWinner(null, "Admin has ended the game");
     }
   });
 });
