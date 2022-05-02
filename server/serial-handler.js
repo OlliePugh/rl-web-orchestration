@@ -58,9 +58,20 @@ const dispatchControlState = async (port, controlState, force) => {
   }
 };
 
+const toggleGoalDetection = (port, toggled) => {
+  console.log(
+    JSON.stringify({ event: "goalDetection", data: { enabled: toggled } })
+  );
+  safeWrite(
+    port,
+    JSON.stringify({ event: "goalDetection", data: { enabled: toggled } })
+  ); // TODO make these the correct way round
+};
+
 module.exports = {
   serialHandler,
   dispatchControlState,
   lowerLift,
   raiseLift,
+  toggleGoalDetection,
 };

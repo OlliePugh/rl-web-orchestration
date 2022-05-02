@@ -165,3 +165,11 @@ function endMatch() {
   console.log("ending match");
   socket.emit("endMatch");
 }
+
+function enableGoalDetection() {
+  socket.emit("goalDetection", true);
+}
+
+function disableGoalDetection() {
+  socket.emit("goalDetection", false);
+}

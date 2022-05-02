@@ -10,6 +10,7 @@ const {
   dispatchControlState,
   raiseLift,
   lowerLift,
+  toggleGoalDetection,
 } = require("./serial-handler");
 
 const GAME_LENGTH = 300_000; // ms
@@ -318,6 +319,12 @@ io.sockets.on("connection", (socket) => {
     if (socket.id === gameController.broadcaster) {
       console.log("raise lift");
       raiseLift(serialPort);
+    }
+  });
+  socket.on("goalDetection", (enabled) => {
+    if (socket.id === gameController.broadcaster) {
+      console.log(`Setting goal detection to ${enabled}`);
+      toggleGoalDetection(serialPort, enabled);
     }
   });
   socket.on("broadcastMessage", (message) => {
