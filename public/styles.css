@@ -8,9 +8,10 @@ video {
   height: 500px;
 }
 
-/* .touch-button {
-  display:  none;
-} */
+.touch-button {
+  display: none;
+  touch-action: manipulation;
+}
 
 @media only screen and (hover: none) and (pointer: coarse) {
   .touch-button {
@@ -26,5 +27,14 @@ video {
     font-size: 100px;
     margin: 0;
     text-align: center;
+    z-index: 0;
+    position: absolute;
+    left: 0;
+    right: 0;
+  }
+
+  .touch-button canvas {
+    z-index: 100;
+    position: absolute;
   }
 }

@@ -1,7 +1,7 @@
 const GAME_LENGTH = 300_000;
 
 let gameTimer;
-
+let video;
 let peerConnection;
 const config = {
   iceServers: [
@@ -49,11 +49,6 @@ socket.on("connect", function () {
     displayFriendLink(true);
   }
 });
-
-const video = document.querySelector("video");
-const joinQueueButton = document.querySelector("#join-queue");
-
-joinQueueButton.addEventListener("click", joinQueue);
 
 socket.on("offer", (id, description) => {
   peerConnection = new RTCPeerConnection(config);
@@ -168,11 +163,9 @@ const setupMobileControls = () => {
   ["N", "E", "S", "W"].forEach((direction) => {
     const el = document.getElementById(`${direction}-canvas`);
     el.addEventListener("touchstart", () => {
-      console.log(`down ${direction}`);
       socket.emit("controlDownCommand", direction);
     });
     el.addEventListener("touchend", () => {
-      console.log(`up ${direction}`);
       socket.emit("controlUpCommand", direction);
     });
   });
@@ -193,4 +186,10 @@ document.addEventListener("keyup", (event) => {
   }
 });
 
-setupMobileControls();
+document.addEventListener("DOMContentLoaded", function (event) {
+  video = document.querySelector("video");
+  const joinQueueButton = document.getElementById("join-queue");
+
+  joinQueueButton.addEventListener("click", joinQueue);
+  setupMobileControls();
+});
