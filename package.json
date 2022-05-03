@@ -5,6 +5,7 @@
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
+    "downtime": "node downtime.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prettier": "npx prettier . --write",
     "prepare": "husky install"
