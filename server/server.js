@@ -135,6 +135,7 @@ class GameController {
 
   addToQueue = (clientId) => {
     this.queue.push(clientId);
+    io.sockets.to(clientId).emit("message", "You have joined the queue");
   };
 
   removeFromQueue = (clientId) => {
