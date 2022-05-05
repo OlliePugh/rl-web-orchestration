@@ -147,11 +147,15 @@ class GameController {
   };
 
   addToPremades = (lobbyLeader, player) => {
-    gameController.premades.set(lobbyLeader, player);
+    this.premades.set(lobbyLeader, player);
   };
 
   removePremades = (lobbyLeader) => {
-    gameController.premades.delete(lobbyLeader);
+    this.premades.delete(lobbyLeader);
+  };
+
+  isPremadeLeader = (player) => {
+    return this.premades.has(player);
   };
 
   isInPremade = (player) => {
@@ -179,9 +183,9 @@ const io = require("socket.io")(serverSsl);
 
 // setup routing
 app.enable("trust proxy"); // enforce https
-// app.use((req, res, next) => {
-//   req.secure ? next() : res.redirect("https://" + req.headers.host + req.url);
-// });
+app.use((req, res, next) => {
+  req.secure ? next() : res.redirect("https://" + req.headers.host + req.url);
+});
 app.use(express.static(`${__dirname}/../public`));
 app.use((req, res, next) => {
   const auth = {
@@ -256,10 +260,7 @@ io.sockets.on("connection", (socket) => {
     }
   });
   socket.on("join_queue", () => {
-    if (
-      !gameController.queue.includes(socket.id) &&
-      !gameController.isInPremade(socket.id)
-    ) {
+    if (!gameController.queue.includes(socket.id)) {
       console.log(`Adding user to queue ${socket.id}`);
       gameController.addToQueue(socket.id);
     }
@@ -342,7 +343,12 @@ io.sockets.on("connection", (socket) => {
     }
     gameController.addToPremades(lobbyLeader, socket.id); // add this user to the lobby
     socket.emit("message", "Successfully joined lobby");
-    socket.to(lobbyLeader).emit("message", "Player joined lobby");
+    socket
+      .to(lobbyLeader)
+      .emit(
+        "message",
+        "Player joined lobby - (You are not in the queue) press join queue to add your lobby to the queue"
+      );
   });
 
   socket.on("leaveLobby", () => {

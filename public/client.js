@@ -175,6 +175,7 @@ document.addEventListener("keydown", (event) => {
   if (!event.repeat) {
     // only on state change
     if (Object.keys(controlMap).includes(event.code)) {
+      event.preventDefault();
       socket.emit("controlDownCommand", controlMap[event.code]);
     }
   }
@@ -182,6 +183,7 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("keyup", (event) => {
   if (Object.keys(controlMap).includes(event.code)) {
+    event.preventDefault();
     socket.emit("controlUpCommand", controlMap[event.code]);
   }
 });

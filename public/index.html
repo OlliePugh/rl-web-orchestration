@@ -7,7 +7,7 @@
   </head>
 
   <body>
-    <h1>Missile Championship</h1>
+    <h1>Online RC Car football/soccer (Rocket League) but real life... 🤔</h1>
     <h3 id="message-header"></h3>
     <h3 id="clock"></h3>
     <video
@@ -21,7 +21,7 @@
     <div id="lobby-join">
       <h2>Want to play against a friend?</h2>
       <button id="get-friends-link-button" onclick="copyFriendsLink()">
-        Get invite link
+        Get lobby invite link
       </button>
     </div>
     <h1>
@@ -29,29 +29,29 @@
       the queue, sorry it isnt clear that you are in the queue, i will fix that
       (probs)
     </h1>
-    <h2>
+    <!-- <h2>
       Watch live while you wait:
-      <a href="https://www.youtube.com/watch?v=rREa5iaKIIo">Live Stream</a>
-    </h2>
+      <a href="https://youtu.be/dOh8s5eg1VI">Live Stream</a>
+    </h2> -->
     <h2>
       <a href="https://www.youtube.com/watch?v=1Iqg7T-Ingg">Build Video</a>
     </h2>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/client.js"></script>
-    <div class="touch-button" style="bottom: 300px; left: 50px">
-      <h1>↑</h1>
+    <div class="touch-button no-select" style="bottom: 300px; left: 50px">
+      <h1 class="no-select">↑</h1>
       <canvas id="N-canvas"></canvas>
     </div>
-    <div class="touch-button" style="bottom: 50px; left: 50px">
-      <h1>↓</h1>
+    <div class="touch-button no-select" style="bottom: 50px; left: 50px">
+      <h1 class="no-select">↓</h1>
       <canvas id="S-canvas"></canvas>
     </div>
-    <div class="touch-button" style="bottom: 50px; right: 50px">
-      <h1>→</h1>
+    <div class="touch-button no-select" style="bottom: 50px; right: 50px">
+      <h1 class="no-select">→</h1>
       <canvas id="E-canvas"></canvas>
     </div>
-    <div class="touch-button" style="bottom: 50px; right: 300px">
-      <h1>←</h1>
+    <div class="touch-button no-select" style="bottom: 50px; right: 300px">
+      <h1 class="no-select">←</h1>
       <canvas id="W-canvas"></canvas>
     </div>
 
