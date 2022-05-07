@@ -48,7 +48,7 @@ class GameController {
   };
 
   checkQueueStatus = () => {
-    io.sockets.to(this.broadcaster).emit("queueSize", this.queue.length);
+    io.sockets.emit("queueSize", this.queue.length);
 
     if (this.currentMatch.length === 0) {
       if (this.isInPremade(this.queue[0])) {

@@ -48,6 +48,8 @@ socket.on("connect", function () {
     // display options to create a lobby
     displayFriendLink(true);
   }
+
+  socket.emit("getQueueSize");
 });
 
 socket.on("offer", (id, description) => {
@@ -92,6 +94,10 @@ socket.on("startMatch", () => {
 socket.on("endMatch", () => {
   finishTimer();
   displayVideoStream(false);
+});
+
+socket.on("queueSize", (amountInQueue) => {
+  document.getElementById("queue-counter").textContent = amountInQueue;
 });
 
 window.onunload = window.onbeforeunload = () => {
