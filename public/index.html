@@ -8,6 +8,16 @@
 
   <body>
     <h1>Online RC Car football/soccer (Rocket League) but real life... 🤔</h1>
+    <h3>
+      Blue car has only just been fixed, if they break now it is the end of this
+      project :D
+    </h3>
+    <!-- <h3>Off for a lil bit while i print some brackets to stop people falling into the goal :D</h3> -->
+    <h2>
+      <a href="https://www.youtube.com/watch?v=1Iqg7T-Ingg"
+        >Build Video (Give me a watch to support the project/my channel!)</a
+      >
+    </h2>
     <h3 id="message-header"></h3>
     <h3 id="clock"></h3>
     <video
@@ -18,7 +28,10 @@
       muted
     ></video>
     <button id="join-queue">Join Queue</button>
-    <p><span id="queue-counter">0</span> in queue</p>
+    <p>
+      <span id="queue-position"></span><span id="queue-counter">0</span> in
+      queue
+    </p>
     <div id="lobby-join">
       <h2>Want to play against a friend?</h2>
       <button id="get-friends-link-button" onclick="copyFriendsLink()">
@@ -34,9 +47,6 @@
       Watch live while you wait:
       <a href="https://youtu.be/dOh8s5eg1VI">Live Stream</a>
     </h2> -->
-    <h2>
-      <a href="https://www.youtube.com/watch?v=1Iqg7T-Ingg">Build Video</a>
-    </h2>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/client.js"></script>
     <div class="touch-button no-select" style="bottom: 300px; left: 50px">

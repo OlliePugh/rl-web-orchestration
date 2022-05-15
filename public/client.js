@@ -1,4 +1,4 @@
-const GAME_LENGTH = 300_000;
+const GAME_LENGTH = 120_000;
 
 let gameTimer;
 let video;
@@ -89,6 +89,7 @@ socket.on("lobbyDisband", () => {
 socket.on("startMatch", () => {
   startTimer();
   displayVideoStream(true);
+  document.getElementById("queue-position").textContent = "";
 });
 
 socket.on("endMatch", () => {
@@ -98,6 +99,10 @@ socket.on("endMatch", () => {
 
 socket.on("queueSize", (amountInQueue) => {
   document.getElementById("queue-counter").textContent = amountInQueue;
+});
+
+socket.on("posInQueue", (position) => {
+  document.getElementById("queue-position").textContent = position + "/";
 });
 
 window.onunload = window.onbeforeunload = () => {
