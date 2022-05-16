@@ -201,10 +201,10 @@ var options = {
   cert: fs.readFileSync("keys/olliepugh_com.crt"),
 };
 
-const server = http.createServer(app).listen(8000, () => {
+const server = http.createServer(app).listen(80, () => {
   console.log("HTTP Server started");
 });
-const serverSsl = https.createServer(options, app).listen(3000, () => {
+const serverSsl = https.createServer(options, app).listen(443, () => {
   console.log("HTTPS Server started");
 });
 const io = require("socket.io")(serverSsl);
