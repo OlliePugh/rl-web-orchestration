@@ -95,6 +95,7 @@ socket.on("startMatch", () => {
 socket.on("endMatch", () => {
   finishTimer();
   displayVideoStream(false);
+  document.getElementById("join-queue").disabled = false; // renable the join queue button
 });
 
 socket.on("queueSize", (amountInQueue) => {
@@ -102,7 +103,9 @@ socket.on("queueSize", (amountInQueue) => {
 });
 
 socket.on("posInQueue", (position) => {
-  document.getElementById("queue-position").textContent = position + "/";
+  document.getElementById(
+    "queue-position"
+  ).textContent = `You are position ${position} out of `;
 });
 
 window.onunload = window.onbeforeunload = () => {
@@ -113,6 +116,7 @@ window.onunload = window.onbeforeunload = () => {
 function joinQueue() {
   socket.emit("join_queue");
   inQueue = true;
+  document.getElementById("join-queue").disabled = true;
 }
 
 function leaveQueue() {
