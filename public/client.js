@@ -1,7 +1,7 @@
-const GAME_LENGTH = 300_000;
+const GAME_LENGTH = 120_000;
 
 let gameTimer;
-
+let video;
 let peerConnection;
 const config = {
   iceServers: [
@@ -48,12 +48,9 @@ socket.on("connect", function () {
     // display options to create a lobby
     displayFriendLink(true);
   }
+
+  socket.emit("getQueueSize");
 });
-
-const video = document.querySelector("video");
-const joinQueueButton = document.querySelector("#join-queue");
-
-joinQueueButton.addEventListener("click", joinQueue);
 
 socket.on("offer", (id, description) => {
   peerConnection = new RTCPeerConnection(config);
@@ -92,11 +89,23 @@ socket.on("lobbyDisband", () => {
 socket.on("startMatch", () => {
   startTimer();
   displayVideoStream(true);
+  document.getElementById("queue-position").textContent = "";
 });
 
 socket.on("endMatch", () => {
   finishTimer();
   displayVideoStream(false);
+  document.getElementById("join-queue").disabled = false; // renable the join queue button
+});
+
+socket.on("queueSize", (amountInQueue) => {
+  document.getElementById("queue-counter").textContent = amountInQueue;
+});
+
+socket.on("posInQueue", (position) => {
+  document.getElementById(
+    "queue-position"
+  ).textContent = `You are position ${position} out of `;
 });
 
 window.onunload = window.onbeforeunload = () => {
@@ -107,6 +116,7 @@ window.onunload = window.onbeforeunload = () => {
 function joinQueue() {
   socket.emit("join_queue");
   inQueue = true;
+  document.getElementById("join-queue").disabled = true;
 }
 
 function leaveQueue() {
@@ -164,10 +174,23 @@ const copyFriendsLink = () => {
   alert("Copied link to clipboard");
 };
 
+const setupMobileControls = () => {
+  ["N", "E", "S", "W"].forEach((direction) => {
+    const el = document.getElementById(`${direction}-canvas`);
+    el.addEventListener("touchstart", () => {
+      socket.emit("controlDownCommand", direction);
+    });
+    el.addEventListener("touchend", () => {
+      socket.emit("controlUpCommand", direction);
+    });
+  });
+};
+
 document.addEventListener("keydown", (event) => {
   if (!event.repeat) {
     // only on state change
     if (Object.keys(controlMap).includes(event.code)) {
+      event.preventDefault();
       socket.emit("controlDownCommand", controlMap[event.code]);
     }
   }
@@ -175,6 +198,15 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("keyup", (event) => {
   if (Object.keys(controlMap).includes(event.code)) {
+    event.preventDefault();
     socket.emit("controlUpCommand", controlMap[event.code]);
   }
+});
+
+document.addEventListener("DOMContentLoaded", function (event) {
+  video = document.querySelector("video");
+  const joinQueueButton = document.getElementById("join-queue");
+
+  joinQueueButton.addEventListener("click", joinQueue);
+  setupMobileControls();
 });

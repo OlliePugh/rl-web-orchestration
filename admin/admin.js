@@ -163,7 +163,7 @@ function raiseLift() {
 
 function endMatch() {
   console.log("ending match");
-  socket.emit("endMatch");
+  socket.emit("adminEndMatch");
 }
 
 function enableGoalDetection() {
@@ -172,4 +172,12 @@ function enableGoalDetection() {
 
 function disableGoalDetection() {
   socket.emit("goalDetection", false);
+}
+
+function stopCars() {
+  socket.emit("stopCars");
+}
+
+function kickPlayer(player) {
+  socket.emit("kickPlayer", player);
 }

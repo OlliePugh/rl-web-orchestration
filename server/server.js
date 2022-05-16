@@ -13,7 +13,7 @@ const {
   toggleGoalDetection,
 } = require("./serial-handler");
 
-const GAME_LENGTH = 300_000; // ms
+const GAME_LENGTH = 120_000; // ms
 
 class GameController {
   constructor() {
@@ -45,10 +45,12 @@ class GameController {
         W: false,
       },
     ];
+    return this.controllerState;
   };
 
   checkQueueStatus = () => {
-    io.sockets.to(this.broadcaster).emit("queueSize", this.queue.length);
+    io.sockets.emit("queueSize", this.queue.length);
+    this.updateQueuePositions();
 
     if (this.currentMatch.length === 0) {
       if (this.isInPremade(this.queue[0])) {
@@ -69,6 +71,12 @@ class GameController {
     }
   };
 
+  updateQueuePositions = () => {
+    this.queue.forEach((clientId, index) => {
+      io.sockets.to(clientId).emit("posInQueue", index + 1);
+    });
+  };
+
   startMatch = (player1, player2) => {
     io.sockets.to(this.broadcaster).emit("watcher", player1); // send video to first client
     io.sockets.to(this.broadcaster).emit("watcher", player2); // send video to second client
@@ -87,11 +95,12 @@ class GameController {
     this.endGameTimer = setTimeout(() => {
       this.declareWinner(null, "Ran out of time!");
     }, GAME_LENGTH);
+    this.updateQueuePositions();
   };
 
   declareWinner = async (winner, extraMessage = "") => {
     clearTimeout(this.endGameTimer); // remove the game timer
-
+    dispatchControlState(serialPort, this.resetControlsState()); // tell the arena to kill all movement (even though it should of already done it)
     io.sockets.to(this.currentMatch[0]).emit("endMatch");
     io.sockets.to(this.currentMatch[1]).emit("endMatch");
 
@@ -126,8 +135,6 @@ class GameController {
         .to(this.broadcaster)
         .emit("disconnectPeer", this.currentMatch[1]);
       this.currentMatch = [];
-      this.resetControlsState();
-      dispatchControlState(serialPort, this.controllerState); // tell the arena to kill all movement (even though it should of already done it)
       // TODO need to wait for the arena to say that its ready to start the next game
       this.checkQueueStatus(); // get ready to start the next game
     }
@@ -142,16 +149,20 @@ class GameController {
     if (this.queue.includes(clientId)) {
       console.log(`Removing user from queue ${clientId}`);
       this.queue = this.queue.filter((item) => item != clientId);
-      io.sockets.to(this.broadcaster).emit("queueSize", this.queue.length);
+      io.sockets.emit("queueSize", this.queue.length);
     }
   };
 
   addToPremades = (lobbyLeader, player) => {
-    gameController.premades.set(lobbyLeader, player);
+    this.premades.set(lobbyLeader, player);
   };
 
   removePremades = (lobbyLeader) => {
-    gameController.premades.delete(lobbyLeader);
+    this.premades.delete(lobbyLeader);
+  };
+
+  isPremadeLeader = (player) => {
+    return this.premades.has(player);
   };
 
   isInPremade = (player) => {
@@ -159,6 +170,27 @@ class GameController {
       this.premades.has(player) ||
       Array.from(this.premades.values()).includes(player)
     );
+  };
+
+  kickPlayer = (player) => {
+    clearTimeout(this.endGameTimer); // remove the game timer for this current game
+    // disconnect the player
+    io.sockets.to(this.currentMatch[player]).emit("endMatch");
+    io.sockets
+      .to(this.broadcaster)
+      .emit("disconnectPeer", this.currentMatch[player]);
+    io.sockets
+      .to(this.currentMatch[player])
+      .emit(
+        "message",
+        "The admin has kicked you from the game - sorry if its not your fault! :("
+      );
+
+    if (player === 0) {
+      this.startMatch(this.queue[0], this.currentMatch[1]); // try to keep the same colour of the cars
+    } else {
+      this.startMatch(this.currentMatch[0], this.queue[0]);
+    }
   };
 }
 
@@ -169,10 +201,10 @@ var options = {
   cert: fs.readFileSync("keys/olliepugh_com.crt"),
 };
 
-const server = http.createServer(app).listen(80, () => {
+const server = http.createServer(app).listen(8000, () => {
   console.log("HTTP Server started");
 });
-const serverSsl = https.createServer(options, app).listen(443, () => {
+const serverSsl = https.createServer(options, app).listen(3000, () => {
   console.log("HTTPS Server started");
 });
 const io = require("socket.io")(serverSsl);
@@ -256,10 +288,7 @@ io.sockets.on("connection", (socket) => {
     }
   });
   socket.on("join_queue", () => {
-    if (
-      !gameController.queue.includes(socket.id) &&
-      !gameController.isInPremade(socket.id)
-    ) {
+    if (!gameController.queue.includes(socket.id)) {
       console.log(`Adding user to queue ${socket.id}`);
       gameController.addToQueue(socket.id);
     }
@@ -322,6 +351,11 @@ io.sockets.on("connection", (socket) => {
       raiseLift(serialPort);
     }
   });
+  socket.on("stopCars", () => {
+    if (socket.id === gameController.broadcaster) {
+      dispatchControlState(serialPort, gameController.resetControlsState);
+    }
+  });
   socket.on("goalDetection", (enabled) => {
     if (socket.id === gameController.broadcaster) {
       console.log(`Setting goal detection to ${enabled}`);
@@ -342,7 +376,12 @@ io.sockets.on("connection", (socket) => {
     }
     gameController.addToPremades(lobbyLeader, socket.id); // add this user to the lobby
     socket.emit("message", "Successfully joined lobby");
-    socket.to(lobbyLeader).emit("message", "Player joined lobby");
+    socket
+      .to(lobbyLeader)
+      .emit(
+        "message",
+        "Player joined lobby - (You are not in the queue) press join queue to add your lobby to the queue"
+      );
   });
 
   socket.on("leaveLobby", () => {
@@ -353,9 +392,16 @@ io.sockets.on("connection", (socket) => {
     }
   });
 
-  socket.on("endMatch", () => {
+  socket.on("adminEndMatch", () => {
     if (socket.id === gameController.broadcaster) {
       gameController.declareWinner(null, "Admin has ended the game");
+    }
+  });
+
+  socket.on("kickPlayer", (player) => {
+    console.log("kicking player " + player);
+    if (socket.id === gameController.broadcaster) {
+      gameController.kickPlayer(player);
     }
   });
 });
